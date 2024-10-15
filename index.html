@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Recipe Keeper</title>
+    <link rel="stylesheet" href="style.css" />
+    <!-- Link to the CSS file -->
+  </head>
+  <body>
+    <!-- Application Header -->
+    <header>
+      <h1>Recipe Keeper</h1>
+    </header>
+    <!-- Recipe Input Section -->
+    <main>
+      <h2>Add Recipe</h2>
+      <form id="recipe-form">
+        <!-- Input for Recipe Name -->
+        <label for="recipe-name">Recipe Name:</label>
+        <input type="text" id="recipe-name" name="recipe-name" required />
+
+        <!-- Input for Recipe Image URL -->
+        <label for="recipeImage">Recipe Image URL:</label>
+        <input
+          type="url"
+          id="recipeImage"
+          name="recipeImage"
+          placeholder="http://example.com/my-dish.jpg"
+        />
+
+        <!-- Textarea for Ingredients -->
+        <label for="recipe-ingredients">Ingredients:</label>
+        <textarea
+          id="recipe-ingredients"
+          name="recipe-ingredients"
+          placeholder="List ingredients separated by commas"
+          required
+        ></textarea>
+
+        <!-- Textarea for Preparation Steps -->
+        <label for="recipe-steps">Steps for preparation:</label>
+        <textarea
+          id="recipe-steps"
+          name="recipe-steps"
+          placeholder="Steps for preparation"
+          required
+        ></textarea>
+
+        <!-- Submit Button -->
+        <button type="submit">Add Recipe</button>
+      </form>
+    </main>
+
+    <!-- Recipe Display Area -->
+    <section>
+      <h2>Your Recipes</h2>
+      <div id="recipe-display"></div>
+      <!-- Recipes will be dynamically inserted here -->
+    </section>
+
+    <!-- Application Footer -->
+    <footer>
+      <p>&copy; 2024 Recipe Keeper</p>
+    </footer>
+
+    <!-- JavaScript -->
+    <script src="script.js"></script>
+  </body>
+</html>
