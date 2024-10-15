@@ -21,7 +21,9 @@ function displayRecipe(recipe, index) {
   recipeNameElement.textContent = recipe.name;
 
   let ingredientsElement = document.createElement("p");
-  ingredientsElement.innerHTML = `<strong>Ingredients:</strong> ${recipe.ingredients.join(", ")}`;
+  ingredientsElement.innerHTML = `<strong>Ingredients:</strong> ${recipe.ingredients.join(
+    ", "
+  )}`;
 
   let stepsElement = document.createElement("p");
   stepsElement.innerHTML = `<strong>Steps:</strong> ${recipe.steps}`;
@@ -38,7 +40,7 @@ function displayRecipe(recipe, index) {
   deleteButton.textContent = "Delete";
   deleteButton.classList.add("delete-btn");
   deleteButton.onclick = function () {
-    deleteRecipe(index);
+    deleteRecipe(recipe.id);
   };
 
   let editButton = document.createElement("button");
@@ -58,7 +60,7 @@ function displayRecipe(recipe, index) {
 }
 
 // Event listener for form submission
-recipeForm.addEventListener("submit", function (e) {
+recipeForm.addEventListener("submit", async function (e) {
   e.preventDefault();
 
   let imageURL = document.getElementById("recipeImage").value;
@@ -67,27 +69,39 @@ recipeForm.addEventListener("submit", function (e) {
     name: recipeName.value,
     ingredients: ingredients.value.split(",").map((item) => item.trim()),
     steps: steps.value,
-    imageURL: imageURL
+    imageURL: imageURL,
   };
 
-  recipes.push(newRecipe);
-
-  saveRecipesToLocalStorage();
-  refreshRecipeDisplay();
-
+  // POST new recipe to the backend API
+  await postRecipe(newRecipe);
+  await refreshRecipeDisplay(); // Fetch and display updated recipes
   recipeForm.reset();
 });
 
-// Function to delete a recipe
-function deleteRecipe(index) {
-  recipes.splice(index, 1);
-  saveRecipesToLocalStorage();
-  refreshRecipeDisplay();
+// Function to delete a recipe (Delete from the backend API)
+async function deleteRecipe(recipe_id) {
+  try {
+    const url = `http://127.0.0.1:8000/recipes/${recipe_id}`;
+    const response = await fetch(url, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+    await refreshRecipeDisplay(); // Refresh after deletion
+  } catch (err) {
+    console.error("Error deleting recipe:", err);
+    throw err;
+  }
 }
 
-// Function to refresh the display after any changes
-function refreshRecipeDisplay() {
-  displayArea.innerHTML = "";
+// Function to refresh the display (Fetch recipes from the backend)
+async function refreshRecipeDisplay() {
+  displayArea.innerHTML = ""; // Clear the display area
+  recipes = await getRecipes(); // Fetch from backend
   recipes.forEach((recipe, index) => {
     displayRecipe(recipe, index);
   });
@@ -123,8 +137,15 @@ function editRecipe(index) {
 
   let saveButton = document.createElement("button");
   saveButton.textContent = "Save";
-  saveButton.onclick = function () {
-    saveEditedRecipe(index, nameInput.value, ingredientsInput.value, stepsInput.value, imageInput.value);
+  saveButton.onclick = async function () {
+    await saveEditedRecipe(
+      recipe.id,
+      nameInput.value,
+      ingredientsInput.value,
+      stepsInput.value,
+      imageInput.value
+    );
+    await refreshRecipeDisplay(); // Fetch and display updated recipes
   };
 
   recipeDiv.appendChild(nameLabel);
@@ -138,37 +159,86 @@ function editRecipe(index) {
   recipeDiv.appendChild(saveButton);
 }
 
-// Function to save the edited recipe
-function saveEditedRecipe(index, newName, newIngredients, newSteps, newImageURL) {
+// Function to save the edited recipe (PUT request to backend)
+async function saveEditedRecipe(
+  recipe_id,
+  newName,
+  newIngredients,
+  newSteps,
+  newImageURL
+) {
   if (!newName || !newIngredients || !newSteps) {
     alert("Please fill in all fields.");
     return;
   }
 
-  recipes[index] = {
+  const updatedRecipe = {
     name: newName,
     ingredients: newIngredients.split(",").map((item) => item.trim()),
     steps: newSteps,
-    imageURL: newImageURL || ""
+    imageURL: newImageURL || "",
   };
 
-  saveRecipesToLocalStorage();
-  refreshRecipeDisplay();
-}
-
-// Function to save recipes to local storage
-function saveRecipesToLocalStorage() {
-  localStorage.setItem("recipes", JSON.stringify(recipes));
-}
-
-// Function to load recipes from local storage
-function loadRecipesFromLocalStorage() {
-  const storedRecipes = localStorage.getItem("recipes");
-  if (storedRecipes) {
-    recipes = JSON.parse(storedRecipes);
-    refreshRecipeDisplay();
+  try {
+    const url = `http://127.0.0.1:8000/recipes/${recipe_id}`;
+    const response = await fetch(url, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(updatedRecipe),
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+  } catch (err) {
+    console.error("Error saving edited recipe:", err);
+    throw err;
   }
 }
 
+// Function to get recipes from the backend
+const getRecipes = async () => {
+  try {
+    const url = "http://127.0.0.1:8000/recipes";
+    const response = await fetch(url, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+    const data = await response.json();
+    return data;
+  } catch (err) {
+    console.error("Error getting recipes:", err);
+    throw err;
+  }
+};
+
+// Function to post a new recipe to the backend
+const postRecipe = async (recipe) => {
+  try {
+    const url = "http://127.0.0.1:8000/recipes";
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(recipe),
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+    const data = await response.json();
+    return data;
+  } catch (err) {
+    console.error("Error posting recipe:", err);
+    throw err;
+  }
+};
+
 // Load recipes on page load
-window.addEventListener("DOMContentLoaded", loadRecipesFromLocalStorage);
+window.addEventListener("DOMContentLoaded", refreshRecipeDisplay);
